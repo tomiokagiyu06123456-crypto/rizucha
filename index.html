@@ -25,12 +25,11 @@
     </div>
     
     <div id="input-area">
-        <button id="mic-btn" onclick="toggleMic()">🎙️ 通話</button>
+        <button id="mic-btn">🎙️ 通話</button>
         <input type="text" id="msg-input" placeholder="メッセージを入力...">
-        <button id="send-btn" onclick="sendMsg()">送信</button>
+        <button id="send-btn">送信</button>
     </div>
 
-    <!-- ここから裏側の連動システム（モジュール版） -->
     <script type="module">
         import { initializeApp } from "https://gstatic.com";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
@@ -47,10 +46,13 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        
         const chatWindow = document.getElementById('chat-window');
         const msgInput = document.getElementById('msg-input');
+        const sendBtn = document.getElementById('send-btn');
+        const micBtn = document.getElementById('mic-btn');
 
-        // 相手のスマホから届いた文字を、リアルタイムに自分の画面に表示する命令
+        // リアルタイムに文字を受信して画面に出す処理
         const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
         onSnapshot(q, (snapshot) => {
             chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
@@ -64,8 +66,8 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         });
 
-        // 自分が「送信」ボタンを押したときに、世界中のスマホへ文字を送信する命令
-        window.sendMsg = async function() {
+        // 送信ボタンが押されたときにデータベースへ文字を届ける処理
+        sendBtn.addEventListener('click', async () => {
             const text = msgInput.value.trim();
             if (text === "") return;
             
@@ -76,22 +78,21 @@
                 });
                 msgInput.value = "";
             } catch (e) {
-                console.error("エラーが発生しました: ", e);
+                console.error("送信エラー: ", e);
             }
-        };
+        });
 
-        // 仮の通話ボタンの動き
+        // 仮の通話ボタンの処理
         let isCalling = false;
-        window.toggleMic = function() {
+        micBtn.addEventListener('click', () => {
             isCalling = !isCalling;
-            const btn = document.getElementById('mic-btn');
             if (isCalling) {
-                btn.textContent = "🛑 切断";
+                micBtn.textContent = "🛑 切断";
                 alert("ボイスチャット（通話）の仕組みは、文字チャットのテスト成功後に作成します！まずは文字が届くか試しましょう。");
             } else {
-                btn.textContent = "🎙️ 通話";
+                micBtn.textContent = "🎙️ 通話";
             }
-        };
+        });
     </script>
 </body>
 </html>
