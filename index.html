@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>りずちゃ</title>
     <style>
-        /* 全体を白と黒のシンプルなデザインにしています */
         body { font-family: sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 95vh; }
         h2 { text-align: center; margin: 10px 0; font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 5px; }
         #chat-window { flex: 1; background: #ffffff; border: 1px solid #000000; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
@@ -21,45 +20,78 @@
 
     <h2>🎙️ りずちゃ</h2>
 
-    <!-- チャットの文字が出る場所 -->
     <div id="chat-window">
-        <div class="msg system-msg">システム: 「りずちゃ」へようこそ！ボタンを押してボイスチャットを開始できます。</div>
+        <div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>
     </div>
     
-    <!-- 操作するところ -->
     <div id="input-area">
         <button id="mic-btn" onclick="toggleMic()">🎙️ 通話</button>
         <input type="text" id="msg-input" placeholder="メッセージを入力...">
         <button id="send-btn" onclick="sendMsg()">送信</button>
     </div>
 
-    <script>
-        // ボタンを押したときの仮の動き
+    <!-- ここから裏側の連動システム（モジュール版） -->
+    <script type="module">
+        import { initializeApp } from "https://gstatic.com";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
+
+        // あなたのFirebaseの鍵
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
+            authDomain: "://firebaseapp.com",
+            projectId: "rizucha-e3102",
+            storageBucket: "rizucha-e3102.firebasestorage.app",
+            messagingSenderId: "908166388833",
+            appId: "1:908166388833:web:7a917363456682e4815e20"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const chatWindow = document.getElementById('chat-window');
+        const msgInput = document.getElementById('msg-input');
+
+        // 相手のスマホから届いた文字を、リアルタイムに自分の画面に表示する命令
+        const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+        onSnapshot(q, (snapshot) => {
+            chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const newMsg = document.createElement('div');
+                newMsg.className = 'msg';
+                newMsg.textContent = data.text;
+                chatWindow.appendChild(newMsg);
+            });
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        });
+
+        // 自分が「送信」ボタンを押したときに、世界中のスマホへ文字を送信する命令
+        window.sendMsg = async function() {
+            const text = msgInput.value.trim();
+            if (text === "") return;
+            
+            try {
+                await addDoc(collection(db, "messages"), {
+                    text: text,
+                    createdAt: new Date()
+                });
+                msgInput.value = "";
+            } catch (e) {
+                console.error("エラーが発生しました: ", e);
+            }
+        };
+
+        // 仮の通話ボタンの動き
         let isCalling = false;
-        function toggleMic() {
+        window.toggleMic = function() {
             isCalling = !isCalling;
             const btn = document.getElementById('mic-btn');
             if (isCalling) {
                 btn.textContent = "🛑 切断";
-                alert("【テスト】マイクをオンにして通話を開始する準備をします（まだ繋がりません）");
+                alert("ボイスチャット（通話）の仕組みは、文字チャットのテスト成功後に作成します！まずは文字が届くか試しましょう。");
             } else {
                 btn.textContent = "🎙️ 通話";
             }
-        }
-
-        function sendMsg() {
-            const input = document.getElementById('msg-input');
-            if (input.value.trim() === "") return;
-            
-            const window = document.getElementById('chat-window');
-            const newMsg = document.createElement('div');
-            newMsg.className = 'msg';
-            newMsg.textContent = input.value;
-            window.appendChild(newMsg);
-            
-            input.value = "";
-            window.scrollTop = window.scrollHeight;
-        }
+        };
     </script>
 </body>
 </html>
