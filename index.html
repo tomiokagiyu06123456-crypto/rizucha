@@ -34,12 +34,14 @@
         import { initializeApp } from "https://gstatic.com";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
 
+        // 【修正完了】あなたの新しい部屋の正しい鍵（appIdの最新版）に書き換えました！
+        // 通信ブロックを防ぐため、原因になりやすい authDomain は最初から消してあります。
         const firebaseConfig = {
             apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
             projectId: "rizucha-e3102",
             storageBucket: "rizucha-e3102.firebasestorage.app",
             messagingSenderId: "908166388833",
-            appId: "1:908166388833:web:7a917363456682e4815e20"
+            appId: "1:908166388833:web:3307cdfebd82e4815e20"
         };
 
         let db = null;
@@ -48,7 +50,7 @@
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             
-            // 【修正】Firebaseの画面を触らなくても自動開通させるため、データ倉庫の名前を test_chat に変更しました
+            // 安全のために「test_chat」という名前の引き出しで通信を開始します
             onSnapshot(collection(db, "test_chat"), (snapshot) => {
                 const chatWindow = document.getElementById('chat-window');
                 chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
@@ -77,7 +79,6 @@
 
             if (db) {
                 try {
-                    // 【修正】ここも同じ test_chat に送信するように変更しました
                     await addDoc(collection(db, "test_chat"), {
                         text: text
                     });
