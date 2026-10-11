@@ -12,7 +12,7 @@
         input[type="text"] { flex: 1; padding: 12px; border: 1px solid #000000; font-size: 16px; }
         button { padding: 12px 18px; border: 1px solid #000000; background: #ffffff; color: #000000; font-weight: bold; cursor: pointer; font-size: 14px; }
         button:active { background: #eeeeee; }
-        .msg { margin-bottom: 8px; padding: 8px; border-bottom: 1px dashed #ccc; width: 100%; }
+        .msg { margin-bottom: 8px; padding: 8px; border-bottom: 1px dashed #ccc; width: 100%; word-break: break-all; }
         .system-msg { color: #666666; font-size: 0.9rem; text-align: center; border: none; }
     </style>
 </head>
@@ -21,7 +21,7 @@
     <h2>🎙️ りずちゃ</h2>
 
     <div id="chat-window">
-        <div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>
+        <div class="msg system-msg">システム: 「りずちゃ」へようこそ！テストモードで起動しました。</div>
     </div>
     
     <div id="input-area">
@@ -30,68 +30,33 @@
         <button id="send-btn" onclick="sendMsg()">送信</button>
     </div>
 
-    <!-- ここから裏側の連動システム（モジュール版） -->
-    <script type="module">
-        import { initializeApp } from "https://gstatic.com";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
-
-        // あなたのFirebaseの鍵
-        const firebaseConfig = {
-            apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
-            authDomain: "://firebaseapp.com",
-            projectId: "rizucha-e3102",
-            storageBucket: "rizucha-e3102.firebasestorage.app",
-            messagingSenderId: "908166388833",
-            appId: "1:908166388833:web:7a917363456682e4815e20"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const chatWindow = document.getElementById('chat-window');
-        const msgInput = document.getElementById('msg-input');
-
-        // 相手のスマホから届いた文字を、リアルタイムに自分の画面に表示する命令
-        const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
-        onSnapshot(q, (snapshot) => {
-            chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const newMsg = document.createElement('div');
-                newMsg.className = 'msg';
-                newMsg.textContent = data.text;
-                chatWindow.appendChild(newMsg);
-            });
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        });
-
-        // 自分が「送信」ボタンを押したときに、世界中のスマホへ文字を送信する命令
-        window.sendMsg = async function() {
-            const text = msgInput.value.trim();
-            if (text === "") return;
+    <script>
+        // 送信ボタンを押したときの動き（通信なしのテスト用）
+        function sendMsg() {
+            const input = document.getElementById('msg-input');
+            if (input.value.trim() === "") return;
             
-            try {
-                await addDoc(collection(db, "messages"), {
-                    text: text,
-                    createdAt: new Date()
-                });
-                msgInput.value = "";
-            } catch (e) {
-                console.error("エラーが発生しました: ", e);
-            }
-        };
+            const window = document.getElementById('chat-window');
+            const newMsg = document.createElement('div');
+            newMsg.className = 'msg';
+            newMsg.textContent = input.value;
+            window.appendChild(newMsg);
+            
+            input.value = "";
+            window.scrollTop = window.scrollHeight;
+        }
 
-        // 仮の通話ボタンの動き
         let isCalling = false;
-        window.toggleMic = function() {
+        function toggleMic() {
             isCalling = !isCalling;
             const btn = document.getElementById('mic-btn');
             if (isCalling) {
                 btn.textContent = "🛑 切断";
-                alert("ボイスチャット（通話）の仕組みは、文字チャットのテスト成功後に作成します！まずは文字が届くか試しましょう。");
+                alert("ボイスチャットのテスト画面です。");
             } else {
                 btn.textContent = "🎙️ 通話";
             }
-        };
+        }
     </script>
 </body>
 </html>
