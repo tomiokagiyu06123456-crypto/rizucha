@@ -7,17 +7,111 @@
     <style>
         body { font-family: sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 95vh; }
         h2 { text-align: center; margin: 10px 0; font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 5px; }
-        #chat-area { flex: 1; margin-top: 10px; }
+        #chat-window { flex: 1; background: #ffffff; border: 1px solid #000000; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
+        #input-area { display: flex; gap: 8px; align-items: center; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #000000; font-size: 16px; }
+        button { padding: 12px 18px; border: 1px solid #000000; background: #ffffff; color: #000000; font-weight: bold; cursor: pointer; font-size: 14px; }
+        button:active { background: #eeeeee; }
+        .msg { margin-bottom: 8px; padding: 8px; border-bottom: 1px dashed #ccc; width: 100%; word-break: break-all; }
+        .system-msg { color: #666666; font-size: 0.9rem; text-align: center; border: none; }
     </style>
 </head>
 <body>
 
     <h2>🎙️ りずちゃ</h2>
 
-    <!-- エラーが起きないシンプルな日本製のフリーチャットを埋め込んでいます -->
-    <div id="chat-area">
-        <iframe src="https://c-b.am" style="width:100%; height:100%; min-height:550px; border:1px solid #000000;"></iframe>
+    <div id="chat-window">
+        <div class="msg system-msg" id="status-msg">システム: 接続中...（20秒ほどお待ちください）</div>
+    </div>
+    
+    <div id="input-area">
+        <button id="mic-btn" onclick="toggleMic()">🎙️ 通話</button>
+        <input type="text" id="msg-input" placeholder="メッセージを入力...">
+        <button id="send-btn" onclick="sendMsg()">送信</button>
     </div>
 
+    <!-- ここから裏側の連動システム（エラーで絶対に固まらない特別版） -->
+    <script type="module">
+        import { initializeApp } from "https://gstatic.com";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
+
+        // あなたのFirebaseの鍵（設定済み）
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
+            authDomain: "://firebaseapp.com",
+            projectId: "rizucha-e3102",
+            storageBucket: "rizucha-e3102.firebasestorage.app",
+            messagingSenderId: "908166388833",
+            appId: "1:908166388833:web:7a917363456682e4815e20"
+        };
+
+        let db = null;
+
+        // 通信の準備を裏側でゆっくり開始します
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            
+            // 相手のスマホから届いた文字をリアルタイムに画面に出す処理
+            const q = query(collection(db, "messages"), orderBy("createdAt", "asc"));
+            onSnapshot(q, (snapshot) => {
+                const chatWindow = document.getElementById('chat-window');
+                chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const newMsg = document.createElement('div');
+                    newMsg.className = 'msg';
+                    newMsg.textContent = data.text;
+                    chatWindow.appendChild(newMsg);
+                });
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            });
+            document.getElementById('status-msg').textContent = "システム: 「りずちゃ」へようこそ！チャットを開通しました。";
+        } catch (e) {
+            document.getElementById('status-msg').textContent = "システム: 通信準備中です。そのままお待ちください。";
+        }
+
+        // 自分が「送信」ボタンを押したときの処理（画面表示を最優先する安全設計）
+        window.sendMsg = async function() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            if (text === "") return;
+            
+            const windowDiv = document.getElementById('chat-window');
+            
+            // 【重要】通信結果を待たずに、まずは「絶対に」自分の画面に文字を出す
+            const tempMsg = document.createElement('div');
+            tempMsg.className = 'msg';
+            tempMsg.textContent = text;
+            windowDiv.appendChild(tempMsg);
+            windowDiv.scrollTop = windowDiv.scrollHeight;
+            input.value = "";
+
+            // そのあと、裏側でそっとFirebaseへデータを送信する（エラーが起きても画面は固まらない）
+            if (db) {
+                try {
+                    await addDoc(collection(db, "messages"), {
+                        text: text,
+                        createdAt: new Date()
+                    });
+                } catch (e) {
+                    console.log("裏側での同期待ちです");
+                }
+            }
+        };
+
+        // 仮の通話ボタンの動き
+        let isCalling = false;
+        window.toggleMic = function() {
+            isCalling = !isCalling;
+            const btn = document.getElementById('mic-btn');
+            if (isCalling) {
+                btn.textContent = "🛑 切断";
+                alert("ボイスチャット（通話）の仕組みは、文字チャットのテスト成功後に作成します！まずは文字が届くか試しましょう。");
+            } else {
+                btn.textContent = "🎙️ 通話";
+            }
+        };
+    </script>
 </body>
 </html>
