@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>りずちゃ</title>
+    <style>
+        /* 全体を白と黒のシンプルなデザインにしています */
+        body { font-family: sans-serif; background: #ffffff; color: #000000; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 95vh; }
+        h2 { text-align: center; margin: 10px 0; font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 5px; }
+        #chat-window { flex: 1; background: #ffffff; border: 1px solid #000000; padding: 15px; overflow-y: auto; margin-bottom: 10px; }
+        #input-area { display: flex; gap: 8px; align-items: center; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #000000; font-size: 16px; }
+        button { padding: 12px 18px; border: 1px solid #000000; background: #ffffff; color: #000000; font-weight: bold; cursor: pointer; font-size: 14px; }
+        button:active { background: #eeeeee; }
+        .msg { margin-bottom: 8px; padding: 8px; border-bottom: 1px dashed #ccc; width: 100%; }
+        .system-msg { color: #666666; font-size: 0.9rem; text-align: center; border: none; }
+    </style>
+</head>
+<body>
+
+    <h2>🎙️ りずちゃ</h2>
+
+    <!-- チャットの文字が出る場所 -->
+    <div id="chat-window">
+        <div class="msg system-msg">システム: 「りずちゃ」へようこそ！ボタンを押してボイスチャットを開始できます。</div>
+    </div>
+    
+    <!-- 操作するところ -->
+    <div id="input-area">
+        <button id="mic-btn" onclick="toggleMic()">🎙️ 通話</button>
+        <input type="text" id="msg-input" placeholder="メッセージを入力...">
+        <button id="send-btn" onclick="sendMsg()">送信</button>
+    </div>
+
+    <script>
+        // ボタンを押したときの仮の動き
+        let isCalling = false;
+        function toggleMic() {
+            isCalling = !isCalling;
+            const btn = document.getElementById('mic-btn');
+            if (isCalling) {
+                btn.textContent = "🛑 切断";
+                alert("【テスト】マイクをオンにして通話を開始する準備をします（まだ繋がりません）");
+            } else {
+                btn.textContent = "🎙️ 通話";
+            }
+        }
+
+        function sendMsg() {
+            const input = document.getElementById('msg-input');
+            if (input.value.trim() === "") return;
+            
+            const window = document.getElementById('chat-window');
+            const newMsg = document.createElement('div');
+            newMsg.className = 'msg';
+            newMsg.textContent = input.value;
+            window.appendChild(newMsg);
+            
+            input.value = "";
+            window.scrollTop = window.scrollHeight;
+        }
+    </script>
+</body>
+</html>
