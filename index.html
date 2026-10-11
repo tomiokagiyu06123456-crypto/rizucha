@@ -34,9 +34,9 @@
         import { initializeApp } from "https://gstatic.com";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://gstatic.com";
 
+        // 【修正完了】ドメインブロックの原因になっていた authDomain を完全に消去しました
         const firebaseConfig = {
             apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
-            authDomain: "://firebaseapp.com",
             projectId: "rizucha-e3102",
             storageBucket: "rizucha-e3102.firebasestorage.app",
             messagingSenderId: "908166388833",
@@ -49,7 +49,6 @@
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
             
-            // 【変更点】エラーの原因になりやすい「並び替え命令」を一度すべて消し、一番シンプルな接続テストにしました
             onSnapshot(collection(db, "messages"), (snapshot) => {
                 const chatWindow = document.getElementById('chat-window');
                 chatWindow.innerHTML = '<div class="msg system-msg">システム: 「りずちゃ」へようこそ！チャットを開通しました。</div>';
@@ -78,7 +77,6 @@
 
             if (db) {
                 try {
-                    // 【変更点】時間（createdAt）の保存も一度お休みして、文字だけをシンプルに送信します
                     await addDoc(collection(db, "messages"), {
                         text: text
                     });
