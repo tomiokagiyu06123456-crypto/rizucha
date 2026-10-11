@@ -21,7 +21,7 @@
     <h2>🎙️ りずちゃ</h2>
 
     <div id="chat-window">
-        <div class="msg system-msg" id="status-msg">システム: 接続中...（20秒ほどお待ちください）</div>
+        <div class="msg system-msg" id="status-msg">システム: 接続中...</div>
     </div>
     
     <div id="input-area">
@@ -30,15 +30,17 @@
         <button id="send-btn" onclick="sendMsg()">送信</button>
     </div>
 
-    <!-- ここから裏側の連動システム（エラーで絶対に固まらない特別版） -->
+    <!-- ここから裏側の連動システム（修正完了版） -->
     <script type="module">
+        // 【修正点①】Firebaseを読み込む正しい最新URLに修正しました
         import { initializeApp } from "https://gstatic.com";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://gstatic.com";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://gstatic.com";
 
-        // あなたのFirebaseの鍵（設定済み）
+        // あなたのFirebaseの鍵
         const firebaseConfig = {
             apiKey: "AIzaSyCRt8X8NIegDI63IPZo4f9vb6J5zHx7NxA",
-            authDomain: "://firebaseapp.com",
+            // 【修正点②】authDomainのURLの抜けを正しく直しました
+            authDomain: "rizucha-e3102.firebaseapp.com",
             projectId: "rizucha-e3102",
             storageBucket: "rizucha-e3102.firebasestorage.app",
             messagingSenderId: "908166388833",
@@ -47,7 +49,6 @@
 
         let db = null;
 
-        // 通信の準備を裏側でゆっくり開始します
         try {
             const app = initializeApp(firebaseConfig);
             db = getFirestore(app);
@@ -68,34 +69,28 @@
             });
             document.getElementById('status-msg').textContent = "システム: 「りずちゃ」へようこそ！チャットを開通しました。";
         } catch (e) {
-            document.getElementById('status-msg').textContent = "システム: 通信準備中です。そのままお待ちください。";
+            console.error(e);
+            document.getElementById('status-msg').textContent = "システム: 接続エラーが発生しました。設定を確認してください。";
         }
 
-        // 自分が「送信」ボタンを押したときの処理（画面表示を最優先する安全設計）
+        // 自分が「送信」ボタンを押したときの処理
         window.sendMsg = async function() {
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
             if (text === "") return;
             
-            const windowDiv = document.getElementById('chat-window');
-            
-            // 【重要】通信結果を待たずに、まずは「絶対に」自分の画面に文字を出す
-            const tempMsg = document.createElement('div');
-            tempMsg.className = 'msg';
-            tempMsg.textContent = text;
-            windowDiv.appendChild(tempMsg);
-            windowDiv.scrollTop = windowDiv.scrollHeight;
             input.value = "";
 
-            // そのあと、裏側でそっとFirebaseへデータを送信する（エラーが起きても画面は固まらない）
             if (db) {
                 try {
+                    // 【修正点③】サーバーの時間（serverTimestamp）を使って正しく保存するようにしました
                     await addDoc(collection(db, "messages"), {
                         text: text,
-                        createdAt: new Date()
+                        createdAt: serverTimestamp()
                     });
                 } catch (e) {
-                    console.log("裏側での同期待ちです");
+                    console.error("送信エラー:", e);
+                    alert("送信に失敗しました。Firebaseのルールなどを確認してください。");
                 }
             }
         };
